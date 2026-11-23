@@ -1,0 +1,28 @@
+#-------------------------------------------------------------------------------#
+#               Qodana analysis configuration for Next.js projects              #
+#             https://www.jetbrains.com/help/qodana/qodana-yaml.html            #
+#-------------------------------------------------------------------------------#
+version: "1.0"
+
+# Specify inspection profile for code analysis
+profile:
+  name: qodana.starter
+
+# Exclude files and directories that may contain circular structures or are generated
+exclude:
+  - name: "all"
+    paths:
+      - "node_modules"
+      - ".next"
+      - "out"
+      - "next.config.mjs"
+
+# Execute shell command before Qodana execution (optional, used in CI/CD)
+# bootstrap: sh ./prepare-qodana.sh
+
+# Install IDE plugins before Qodana execution (optional, used in CI/CD)
+# plugins:
+#   - id: <plugin.id> # plugin id can be found at https://plugins.jetbrains.com
+
+# Specify Qodana linter for analysis
+linter: jetbrains/qodana-js:2025.1

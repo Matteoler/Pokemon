@@ -1,0 +1,307 @@
+// use prisma-next
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+
+model User {
+  id            String       @id(map: "user_pkey")
+  name          String
+  email         String
+  emailVerified Boolean      @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  teams         Team[]
+  accounts      Account[]
+  sessions      Session[]
+
+  @@index([email], map: "user_email_key", unique: true)
+  @@map("user")
+}
+
+model Account {
+  id                    String        @id(map: "account_pkey")
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "account_userId_fkey")
+
+  @@index([userId], map: "account_userId_idx")
+  @@map("account")
+}
+
+model CategoriesObjets {
+  id          String   @id(map: "categoriesObjets_pkey")
+  nom         String
+  description String
+  objets      Objets[]
+
+  @@index([nom], map: "categoriesObjets_nom_key", unique: true)
+  @@map("categoriesObjets")
+}
+
+model EggGroups {
+  id               String             @id(map: "eggGroups_pkey")
+  nomEggGroup      String
+  pokemonEggGroups PokemonEggGroups[]
+
+  @@index([nomEggGroup], map: "eggGroups_nomEggGroup_key", unique: true)
+  @@map("eggGroups")
+}
+
+model Jeuxvideos {
+  id          String        @id(map: "jeuxvideos_pkey")
+  name        String
+  description String
+  generations Generations[]
+
+  @@map("jeuxvideos")
+}
+
+model Generations {
+  id            String      @id(map: "generations_pkey")
+  numGeneration Int
+  nomGeneration String
+  description   String
+  jeuxvideosId  String?
+  pokemon       Pokemon[]
+  saisons       Saisons[]
+  jeuxvideos    Jeuxvideos? @relation(fields: [jeuxvideosId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "generations_jeuxvideosId_fkey", index: false)
+
+  @@map("generations")
+}
+
+model Lieux {
+  id      String @id(map: "lieux_pkey")
+  nomLieu String
+
+  @@map("lieux")
+}
+
+model Types {
+  id           String         @id(map: "types_pkey")
+  nomType      String
+  image        String
+  moves        Moves[]
+  pokemons Pokemon[]
+
+  @@index([nomType], map: "types_nomType_key", unique: true)
+  @@map("types")
+}
+
+model Moves {
+  id                     String         @id(map: "Moves_pkey")
+  nomMove                String
+  description            String
+  typeId                 String
+  puissance              Int
+  precision              Int
+  pp                     Int
+  pokemonMoves           PokemonMoves[]
+  type                  Types         @relation(fields: [typeId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "Moves_typeId_fkey", index: false)
+  teamPokemon            TeamPokemon[]  @relation(name: "TeamPokemon_move1Id_fkey")
+  teamPokemonTeamPokemon TeamPokemon[]  @relation(name: "TeamPokemon_move2Id_fkey")
+  teamPokemon2           TeamPokemon[]  @relation(name: "TeamPokemon_move3Id_fkey")
+  teamPokemon3           TeamPokemon[]  @relation(name: "TeamPokemon_move4Id_fkey")
+}
+
+model Nature {
+  id          String        @id(map: "nature_pkey")
+  nomNature   String
+  description String
+  teamPokemon TeamPokemon[]
+
+  @@index([nomNature], map: "nature_nomNature_key", unique: true)
+  @@map("nature")
+}
+
+model Objets {
+  id              String           @id(map: "objets_pkey")
+  nomObjet        String
+  image           String
+  categorieId     String
+  description     String
+  effets          Jsonb
+  estReutilisable Boolean          @default(false)
+  estVendable     Boolean          @default(true)
+  prix            Int?
+  teamPokemon     TeamPokemon[]
+  pokemonMoves    PokemonMoves[]
+  categorie       CategoriesObjets @relation(fields: [categorieId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "objets_categorieId_fkey", index: false)
+
+  @@map("objets")
+}
+
+model Pokemon {
+  numPokedex            Int                @id(map: "pokemon_pkey") @default(autoincrement())
+  nomPokemon            String
+  description           String
+  image                 String
+  couleur               String
+  taille                Float
+  poids                 Float
+  generationId          String
+  evolutionChainId      Int?
+  evolutionPrecedenteId Int?
+  categorie             String
+  attaque               Int
+  attaqueSpe            Int
+  defense               Int
+  defenseSpe            Int
+  pv                    Int
+  vitesse               Int
+  teamPokemon           TeamPokemon[]
+  pokemonEggGroups      PokemonEggGroups[]
+  pokemonMoves          PokemonMoves[]
+  talents               Talents[]
+  types                 Types[]
+  evolutionPrecedente   Pokemon?           @relation(name: "pokemon_evolutionPrecedenteId_fkey", fields: [evolutionPrecedenteId], references: [numPokedex], onDelete: SetNull, onUpdate: Cascade, map: "pokemon_evolutionPrecedenteId_fkey", index: false)
+  pokemon               Pokemon[]          @relation(name: "pokemon_evolutionPrecedenteId_fkey")
+  generation            Generations        @relation(fields: [generationId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "pokemon_generationId_fkey", index: false)
+
+  @@map("pokemon")
+}
+
+model PokemonEggGroups {
+  pokemonId  Int
+  eggGroupId String
+  eggGroup   EggGroups @relation(fields: [eggGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "pokemonEggGroups_eggGroupId_fkey", index: false)
+  pokemon    Pokemon   @relation(fields: [pokemonId], references: [numPokedex], onDelete: Restrict, onUpdate: Cascade, map: "pokemonEggGroups_pokemonId_fkey", index: false)
+
+  @@id([pokemonId, eggGroupId], map: "pokemonEggGroups_pkey")
+  @@map("pokemonEggGroups")
+}
+
+model PokemonMoves {
+  id                  String  @id(map: "pokemonMoves_pkey")
+  pokemonId           Int
+  moveId              String
+  niveauApprentissage Int?
+  objetApprentissage  String?
+  parReproduction     Boolean @default(false)
+  parTuteur           Boolean @default(false)
+  move                Moves   @relation(fields: [moveId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "pokemonMoves_moveId_fkey", index: false)
+  objets              Objets? @relation(fields: [objetApprentissage], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "pokemonMoves_objetApprentissage_fkey", index: false)
+  pokemon             Pokemon @relation(fields: [pokemonId], references: [numPokedex], onDelete: Restrict, onUpdate: Cascade, map: "pokemonMoves_pokemonId_fkey", index: false)
+
+  @@index([pokemonId, moveId], map: "pokemonMoves_pokemonId_moveId_key", unique: true)
+  @@map("pokemonMoves")
+}
+
+model Talents {
+  id             String           @id(map: "talents_pkey")
+  nomTalent      String
+  description    String
+  effetCombat    String?
+  teamPokemon    TeamPokemon[]
+  pokemons       Pokemon[]
+
+  @@index([nomTalent], map: "talents_nomTalent_key", unique: true)
+  @@map("talents")
+}
+
+model PokemonTalents {
+  pokemonId Int
+  talentId  String
+  estCache  Boolean @default(false)
+  pokemon   Pokemon @relation(fields: [pokemonId], references: [numPokedex], onDelete: Restrict, onUpdate: Cascade, map: "pokemonTalents_pokemonId_fkey", index: false)
+  talent    Talents @relation(fields: [talentId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "pokemonTalents_talentId_fkey", index: false)
+
+  @@id([pokemonId, talentId], map: "pokemonTalents_pkey")
+  @@map("pokemonTalents")
+}
+
+model PokemonTypes {
+  pokemonId Int
+  typeId    String
+  pokemon   Pokemon @relation(fields: [pokemonId], references: [numPokedex], onDelete: Restrict, onUpdate: Cascade, map: "pokemonTypes_pokemonId_fkey", index: false)
+  type     Types  @relation(fields: [typeId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "pokemonTypes_typeId_fkey", index: false)
+
+  @@id([pokemonId, typeId], map: "pokemonTypes_pkey")
+  @@map("pokemonTypes")
+}
+
+
+model Saisons {
+  id           String       @id(map: "saisons_pkey")
+  nomSaison    String
+  description  String
+  personnages  String
+  generationId String?
+  generation   Generations? @relation(fields: [generationId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "saisons_generationId_fkey", index: false)
+
+  @@map("saisons")
+}
+
+model Session {
+  id        String       @id(map: "session_pkey")
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "session_userId_fkey")
+
+  @@index([token], map: "session_token_key", unique: true)
+  @@index([userId], map: "session_userId_idx")
+  @@map("session")
+}
+
+model Team {
+  id          String        @id(map: "Team_pkey")
+  nomTeam     String
+  description String
+  userId      String
+  teamPokemon TeamPokemon[]
+  user        User          @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "Team_userId_fkey", index: false)
+}
+
+model TeamPokemon {
+  teamId           String
+  pokemonId        Int
+  objetId          String
+  talentId         String
+  natureId         String
+  move1Id          String
+  move2Id          String?
+  move3Id          String?
+  move4Id          String?
+  pointsPv         Int     @default(0)
+  pointsAttaque    Int     @default(0)
+  pointsDefense    Int     @default(0)
+  pointsAttaqueSpe Int     @default(0)
+  pointsDefenseSpe Int     @default(0)
+  pointsVitesse    Int     @default(0)
+  move1            Moves   @relation(name: "TeamPokemon_move1Id_fkey", fields: [move1Id], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "TeamPokemon_move1Id_fkey", index: false)
+  move2            Moves?  @relation(name: "TeamPokemon_move2Id_fkey", fields: [move2Id], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "TeamPokemon_move2Id_fkey", index: false)
+  move3            Moves?  @relation(name: "TeamPokemon_move3Id_fkey", fields: [move3Id], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "TeamPokemon_move3Id_fkey", index: false)
+  move4            Moves?  @relation(name: "TeamPokemon_move4Id_fkey", fields: [move4Id], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "TeamPokemon_move4Id_fkey", index: false)
+  nature           Nature  @relation(fields: [natureId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "TeamPokemon_natureId_fkey", index: false)
+  objet            Objets  @relation(fields: [objetId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "TeamPokemon_objetId_fkey", index: false)
+  pokemon          Pokemon @relation(fields: [pokemonId], references: [numPokedex], onDelete: Restrict, onUpdate: Cascade, map: "TeamPokemon_pokemonId_fkey", index: false)
+  talent           Talents @relation(fields: [talentId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "TeamPokemon_talentId_fkey", index: false)
+  team             Team    @relation(fields: [teamId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "TeamPokemon_teamId_fkey", index: false)
+
+  @@id([teamId, pokemonId], map: "TeamPokemon_pkey")
+}
+
+model Verification {
+  id         String       @id(map: "verification_pkey")
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@index([identifier], map: "verification_identifier_idx")
+  @@map("verification")
+}
